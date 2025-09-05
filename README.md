@@ -2,7 +2,7 @@
 An automation script for configuring a vulnerable Windows 10 Workstation for Pentesting Practice. Before the script can be run, initial setup must be performed on a fresh install of Windows 10.
 
 # Installation
-## On Windows 10 Workstation
+## On Fresh Install of Windows 10 Workstation
 
 ⚠️ CRITICAL SECURITY WARNING: These configurations are INTENTIONALLY INSECURE and should ONLY be implemented in an isolated lab environment. Never apply these settings to production systems or networks connected to the internet.
 Lab Architecture Overview
