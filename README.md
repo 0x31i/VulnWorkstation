@@ -79,6 +79,14 @@ cmdkey /add:server01 /user:Administrator /pass:Password123!
 
 # Run Automated Installation Script
 
+Open web browser, go to "github.com/0x31i/VulnWorkstation"
+Download the vulnworkstation.ps1 to the downloads folder.
+
+```bash
+cd /
+cd .\Users\OC\Downloads\
+```
+
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
