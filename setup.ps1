@@ -15,34 +15,34 @@ function Write-Section {
 
 function Write-Success {
     param([string]$Message)
-    Write-Host "[✓] $Message" -ForegroundColor Green
+    Write-Host "$Message" -ForegroundColor Green
 }
 
 function Write-Warning {
     param([string]$Message)
-    Write-Host "[!] $Message" -ForegroundColor Yellow
+    Write-Host "$Message" -ForegroundColor Yellow
 }
 
 function Write-Error {
     param([string]$Message)
-    Write-Host "[✗] $Message" -ForegroundColor Red
+    Write-Host "$Message" -ForegroundColor Red
 }
 
 # Script header
 Clear-Host
 Write-Host @"
 ╔══════════════════════════════════════════════════════════════╗
-║     VULNERABLE WINDOWS 10 WORKSTATION SETUP SCRIPT          ║
+║     VULNERABLE WINDOWS 10 WORKSTATION SETUP SCRIPT           ║
 ║                                                              ║
-║  WARNING: This script will make your system HIGHLY          ║
-║  vulnerable to attacks. Only use in isolated lab            ║
-║  environments for security training purposes.               ║
+║  WARNING: This script will make your system HIGHLY           ║
+║  vulnerable to attacks. Only use in isolated lab             ║
+║  environments for security training purposes.                ║
 ║                                                              ║
-║  This script will:                                          ║
-║  - Disable Windows Defender and Firewall                    ║
-║  - Enable vulnerable RDP and SSH configurations             ║
-║  - Create weak user accounts                                ║
-║  - Store credentials insecurely                             ║
+║  This script will:                                           ║
+║  - Disable Windows Defender and Firewall                     ║
+║  - Enable vulnerable RDP and SSH configurations              ║
+║  - Create weak user accounts                                 ║
+║  - Store credentials insecurely                              ║
 ╚══════════════════════════════════════════════════════════════╝
 "@ -ForegroundColor Red
 
