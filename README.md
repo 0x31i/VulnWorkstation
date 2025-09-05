@@ -1,5 +1,5 @@
 # VulnWorkstation
-An automation script for configuring a vulnerable Windows 10 Workstation for Pentesting Practice.
+An automation script for configuring a vulnerable Windows 10 Workstation for Pentesting Practice. Before the script can be run, initial setup must be performed on a fresh install of Windows 10.
 
 # Installation
 ## On Windows 10 Workstation
@@ -14,7 +14,6 @@ Configure host-only or internal network mode if using virtualization
 No direct internet connectivity for vulnerable systems
 Consider using a pfSense firewall to control lab access
 
-Windows Server 2019 Configuration
 Manual Configuration Steps
 1. Initial Setup
 ```powershell
@@ -44,46 +43,7 @@ Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\RemoteAccess\Par
 Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -value 0
 ```
 
-3. SMB Share Configuration (Vulnerable)
-```powershell
-# Create vulnerable shares
-New-Item -Path "C:\VulnShare" -ItemType Directory
-New-Item -Path "C:\PublicShare" -ItemType Directory
-New-Item -Path "C:\AdminShare" -ItemType Directory
-
-# Create shares with weak permissions
-New-SmbShare -Name "VulnShare" -Path "C:\VulnShare" -FullAccess "Everyone"
-New-SmbShare -Name "PublicShare" -Path "C:\PublicShare" -FullAccess "Everyone"
-New-SmbShare -Name "AdminShare$" -Path "C:\AdminShare" -FullAccess "Everyone"
-
-# Enable SMBv1 (vulnerable protocol)
-Enable-WindowsOptionalFeature -Online -FeatureName "SMB1Protocol" -All -NoRestart
-
-# Place sensitive files
-"admin:Password123!" | Out-File "C:\VulnShare\passwords.txt"
-"Database=VulnDB;User=sa;Password=sa123" | Out-File "C:\PublicShare\config.ini"
-```
-
-4. FTP Server Setup
-```powershell
-# Install IIS with FTP
-Install-WindowsFeature -Name Web-Server, Web-Ftp-Server -IncludeManagementTools
-
-# Configure FTP site
-Import-Module WebAdministration
-New-Item -Path "C:\FTPRoot" -ItemType Directory
-New-WebFtpSite -Name "VulnFTP" -Port 21 -PhysicalPath "C:\FTPRoot"
-
-# Allow anonymous authentication
-Set-ItemProperty "IIS:\Sites\VulnFTP" -Name ftpServer.security.authentication.anonymousAuthentication.enabled -Value $true
-Set-ItemProperty "IIS:\Sites\VulnFTP" -Name ftpServer.security.authentication.basicAuthentication.enabled -Value $true
-
-# Create weak FTP users
-New-LocalUser -Name "ftpuser" -Password (ConvertTo-SecureString "ftp123" -AsPlainText -Force) -PasswordNeverExpires
-Add-LocalGroupMember -Group "Users" -Member "ftpuser"
-```
-
-5. SSH Server Setup
+3. SSH Server Setup
 ```powershell
 # Install OpenSSH Server
 Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
@@ -104,9 +64,7 @@ $sshdConfig | Out-File "C:\ProgramData\ssh\sshd_config" -Encoding ascii
 Restart-Service sshd
 ```
 
-Windows 10 Workstation Configuration
-Manual Configuration Steps
-1. Common Workstation Vulnerabilities
+4. Common Workstation Vulnerabilities
 ```powershell
 # Create local admin with common password
 New-LocalUser -Name "localadmin" -Password (ConvertTo-SecureString "admin123" -AsPlainText -Force) -PasswordNeverExpires
@@ -118,6 +76,8 @@ Enable-LocalUser -Name "Guest"
 # Store credentials in registry (mimikatz target)
 cmdkey /add:server01 /user:Administrator /pass:Password123!
 ```
+
+# Run Automated Installation Script
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
