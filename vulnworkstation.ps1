@@ -882,10 +882,10 @@ Write-Host "Workstation vulnerability configuration v3 complete!" -ForegroundCol
 Write-Host "==========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "NEW VULNERABILITIES IN v3:" -ForegroundColor Cyan
-Write-Host "  ✓ Unquoted Service Paths (3 services)" -ForegroundColor Yellow
-Write-Host "  ✓ AlwaysInstallElevated MSI" -ForegroundColor Yellow
-Write-Host "  ✓ Print Spooler (Local exploitation)" -ForegroundColor Yellow
-Write-Host "  ✓ Service Account Weaknesses" -ForegroundColor Yellow
+Write-Host "  Unquoted Service Paths (3 services)" -ForegroundColor Yellow
+Write-Host "  AlwaysInstallElevated MSI" -ForegroundColor Yellow
+Write-Host "  Print Spooler (Local exploitation)" -ForegroundColor Yellow
+Write-Host "  Service Account Weaknesses" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "POKEMON CTF FLAG STATISTICS:" -ForegroundColor Cyan
 Write-Host "  Total Flags Placed: $($global:FlagList.Count)" -ForegroundColor Yellow
