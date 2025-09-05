@@ -648,6 +648,15 @@ function Configure-ServerConnection {
 function Enable-LegacyProtocols {
     Write-Host "Enabling legacy protocols..." -ForegroundColor Yellow
     
+    # First, ensure network profile is set to Private
+    Write-Host "  Setting network profile to Private..." -ForegroundColor Gray
+    try {
+        Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private -ErrorAction Stop
+        Write-Host "  Network profile set to Private" -ForegroundColor Green
+    } catch {
+        Write-Host "  Warning: Could not change network profile. Some settings may fail." -ForegroundColor Yellow
+    }
+    
     # Enable LLMNR
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" -Name EnableMulticast -Value 1 -ErrorAction SilentlyContinue
     
@@ -661,10 +670,26 @@ function Enable-LegacyProtocols {
     Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name AutoDetect -Value 1
     Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name AutoConfigURL -Value "http://wpad.company.local/wpad.dat"
     
-    # Enable WinRM with basic auth
-    Enable-PSRemoting -Force -SkipNetworkProfileCheck -ErrorAction SilentlyContinue
-    Set-Item WSMan:\localhost\Service\Auth\Basic -Value $true -ErrorAction SilentlyContinue
-    Set-Item WSMan:\localhost\Service\AllowUnencrypted -Value $true -ErrorAction SilentlyContinue
+    # Enable WinRM with basic auth (with better error handling)
+    Write-Host "  Configuring WinRM..." -ForegroundColor Gray
+    try {
+        # Enable PSRemoting
+        Enable-PSRemoting -Force -SkipNetworkProfileCheck -ErrorAction SilentlyContinue
+        
+        # Configure WinRM settings
+        Start-Service WinRM -ErrorAction SilentlyContinue
+        
+        # Use winrm command instead of Set-Item for better compatibility
+        winrm set winrm/config/service/auth '@{Basic="true"}' 2>$null
+        winrm set winrm/config/service '@{AllowUnencrypted="true"}' 2>$null
+        winrm set winrm/config/client/auth '@{Basic="true"}' 2>$null
+        winrm set winrm/config/client '@{AllowUnencrypted="true"}' 2>$null
+        
+        Write-Host "  WinRM configured successfully" -ForegroundColor Green
+    } catch {
+        Write-Host "  Warning: Some WinRM settings could not be applied" -ForegroundColor Yellow
+        Write-Host "  This is expected on Public networks but won't affect other vulnerabilities" -ForegroundColor Gray
+    }
     
     Write-Host "  Legacy protocols enabled" -ForegroundColor Green
 }
