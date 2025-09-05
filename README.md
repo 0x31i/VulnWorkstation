@@ -15,44 +15,54 @@ No direct internet connectivity for vulnerable systems
 Consider using a pfSense firewall to control lab access
 
 Manual Configuration Steps
-1. Initial Setup
+## 1. Initial Setup
+#### Disable Windows Defender (for lab only)
 ```powershell
-# Disable Windows Defender (for lab only)
 Set-MpPreference -DisableRealtimeMonitoring $true
 New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name DisableAntiSpyware -Value 1 -PropertyType DWORD -Force
+```
 
-# Disable Windows Firewall
+#### Disable Windows Firewall
+```powershell
 Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
-
-# Enable Administrator account with weak password
+```
+#### Enable Administrator account with weak password
+```powershell
 Enable-LocalUser -Name "Administrator"
 Set-LocalUser -Name "Administrator" -Password (ConvertTo-SecureString "Password123!" -AsPlainText -Force)
 ```
 
-2. RDP Configuration (Vulnerable)
-
+## 2. RDP Configuration (Vulnerable)
+#### Enable RDP
 ```powershell
-# Enable RDP
 Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -value 0
 Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+```
 
-# Allow unlimited failed login attempts
+#### Allow unlimited failed login attempts
+```powershell
 Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\RemoteAccess\Parameters\AccountLockout' -Name "MaxDenials" -Value 0
+```
 
-# Disable NLA (Network Level Authentication)
+#### Disable NLA (Network Level Authentication)
+```powershell
 Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -value 0
 ```
 
-3. SSH Server Setup
+## 3. SSH Server Setup
+#### Install OpenSSH Server
 ```powershell
-# Install OpenSSH Server
 Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+```
 
-# Configure SSH
+#### Configure SSH
+```powershell
 Start-Service sshd
 Set-Service -Name sshd -StartupType 'Automatic'
+```
 
-# Allow password authentication and root login
+#### Allow password authentication and root login
+```powershell
 $sshdConfig = @"
 PasswordAuthentication yes
 PermitRootLogin yes
@@ -64,29 +74,32 @@ $sshdConfig | Out-File "C:\ProgramData\ssh\sshd_config" -Encoding ascii
 Restart-Service sshd
 ```
 
-4. Common Workstation Vulnerabilities
+## 4. Common Workstation Vulnerabilities
+#### Create local admin with common password
 ```powershell
-# Create local admin with common password
 New-LocalUser -Name "localadmin" -Password (ConvertTo-SecureString "admin123" -AsPlainText -Force) -PasswordNeverExpires
 Add-LocalGroupMember -Group "Administrators" -Member "localadmin"
+```
 
-# Enable Guest account
+#### Enable Guest account
+```powershell
 Enable-LocalUser -Name "Guest"
+```
 
-# Store credentials in registry (mimikatz target)
+#### Store credentials in registry (mimikatz target)
+```powershell
 cmdkey /add:server01 /user:Administrator /pass:Password123!
 ```
 
 # Run Automated Installation Script
 
-Open web browser, go to "github.com/0x31i/VulnWorkstation"
-Download the vulnworkstation.ps1 to the downloads folder.
+- Open web browser, go to "github.com/0x31i/VulnWorkstation"
+- Download the vulnworkstation.ps1 to the downloads folder.
 
 ```bash
 cd /
 cd .\Users\OC\Downloads\
 ```
-
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
