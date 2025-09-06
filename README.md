@@ -104,5 +104,5 @@ cd .\Users\OC\Downloads\
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 ```powershell
-.\vulnworkstation.ps1 -TeamIdentifier "OC" -GenerateFlagReport
+.\vulnworkstation.ps1 -GenerateFlagReport
 ```
