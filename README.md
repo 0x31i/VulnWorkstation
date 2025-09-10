@@ -77,7 +77,7 @@ Restart-Service sshd
 ## 4. Common Workstation Vulnerabilities
 #### Create local admin with common password
 ```powershell
-New-LocalUser -Name "localadmin" -Password (ConvertTo-SecureString "admin123" -AsPlainText -Force) -PasswordNeverExpires
+New-LocalUser -Name "localadmin" -Password (ConvertTo-SecureString "Administrator123" -AsPlainText -Force) -PasswordNeverExpires
 Add-LocalGroupMember -Group "Administrators" -Member "localadmin"
 ```
 
