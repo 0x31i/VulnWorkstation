@@ -5,7 +5,7 @@
 
 param(
     [string]$ServerName = "WIN2019-SRV",
-    [string]$NetworkPrinter = "192.168.1.100",
+    [string]$NetworkPrinter = "192.168.1.230",
     [string]$CommonPassword = "Password123!",
     [switch]$GenerateFlagReport
 )
@@ -87,7 +87,7 @@ function Create-VulnerableUsers {
     Write-Host "Creating vulnerable user accounts with flags..." -ForegroundColor Yellow
     
     # Common local admin (matches server for lateral movement)
-    New-LocalUser -Name "localadmin" -Password (ConvertTo-SecureString "admin123" -AsPlainText -Force) -PasswordNeverExpires -ErrorAction SilentlyContinue
+    New-LocalUser -Name "localadmin" -Password (ConvertTo-SecureString "Administrator123" -AsPlainText -Force) -PasswordNeverExpires -ErrorAction SilentlyContinue
     Add-LocalGroupMember -Group "Administrators" -Member "localadmin" -ErrorAction SilentlyContinue
     
     # User with flag in full name
@@ -97,11 +97,11 @@ function Create-VulnerableUsers {
     $users = @(
         @{Name="jsmith"; Password="Welcome1"; Groups=@("Users"); FullName="John Smith - $userFlag"},
         @{Name="mjones"; Password="Password1"; Groups=@("Users"); FullName="Mary Jones"},
-        @{Name="developer"; Password="dev123"; Groups=@("Users"); FullName="Developer Account"},
-        @{Name="helpdesk"; Password="help123"; Groups=@("Remote Desktop Users"); FullName="Help Desk"},
-        @{Name="tempuser"; Password="temp"; Groups=@("Users"); FullName="Temporary User"},
-        @{Name="svc_backup"; Password="Backup2020!"; Groups=@("Backup Operators"); FullName="Backup Service"},
-        @{Name="debuguser"; Password="Debug123!"; Groups=@("Users"); FullName="Debug Test Account"}
+        @{Name="developer"; Password="Developer123!"; Groups=@("Users"); FullName="Developer Account"},
+        @{Name="helpdesk"; Password="Helpdesk123"; Groups=@("Remote Desktop Users"); FullName="Help Desk"},
+        @{Name="tempuser"; Password="Tempuser2025"; Groups=@("Users"); FullName="Temporary User"},
+        @{Name="svc_backup"; Password="BackupService2025!"; Groups=@("Backup Operators"); FullName="Backup Service"},
+        @{Name="debuguser"; Password="Debugger123!"; Groups=@("Users"); FullName="Debug Test Account"}
     )
     
     foreach ($user in $users) {
@@ -163,7 +163,7 @@ function Configure-WorkstationMimikatzVulnerabilities {
     # Create a process that keeps credentials in memory
     $credScript = @"
 `$cred1 = New-Object System.Management.Automation.PSCredential("jsmith", (ConvertTo-SecureString "Welcome1" -AsPlainText -Force))
-`$cred2 = New-Object System.Management.Automation.PSCredential("localadmin", (ConvertTo-SecureString "admin123" -AsPlainText -Force))
+`$cred2 = New-Object System.Management.Automation.PSCredential("localadmin", (ConvertTo-SecureString "Administrator123" -AsPlainText -Force))
 while (`$true) {
     Start-Sleep -Seconds 300
     # Keep credentials in memory for Mimikatz
@@ -306,7 +306,7 @@ function Create-VulnerableShares {
     New-Item -Path $chromePath -ItemType Directory -Force -ErrorAction SilentlyContinue
     
     $browserFlag = New-CTFFlag -Location "Browser Data" -Description "Chrome Login Data" -Points 30 -Difficulty "Medium" -Technique "Browser credential extraction"
-    "{`"passwords`":[{`"url`":`"http://internal-app`",`"username`":`"admin`",`"password`":`"admin123`",`"flag`":`"$browserFlag`"}]}" | Out-File "$chromePath\Login Data"
+    "{`"passwords`":[{`"url`":`"http://internal-app`",`"username`":`"admin`",`"password`":`"Administrator123`",`"flag`":`"$browserFlag`"}]}" | Out-File "$chromePath\Login Data"
     
     # Create LSASS dump hint file
     $lsassHint = @"
@@ -320,7 +320,7 @@ Mimikatz Practice Hints:
 
 Users logged in:
 - jsmith (Welcome1)
-- localadmin (admin123)
+- localadmin (Administrator123)
 - Administrator ($CommonPassword)
 "@
     $lsassHint | Out-File "C:\Users\Public\Documents\mimikatz_hints.txt"
@@ -480,7 +480,7 @@ function Create-PersistenceMechanisms {
     $taskFlag = New-CTFFlag -Location "Scheduled Task" -Description "DailyUpdate task" -Points 25 -Difficulty "Medium" -Technique "Scheduled task analysis"
     $action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c echo $taskFlag > C:\temp\task_ws.txt"
     $trigger = New-ScheduledTaskTrigger -Daily -At 2am
-    Register-ScheduledTask -TaskName "DailyUpdate" -Action $action -Trigger $trigger -User "localadmin" -Password "admin123" -RunLevel Highest -ErrorAction SilentlyContinue
+    Register-ScheduledTask -TaskName "DailyUpdate" -Action $action -Trigger $trigger -User "localadmin" -Password "Administrator123" -RunLevel Highest -ErrorAction SilentlyContinue
     
     Write-Host "  Persistence mechanisms created with flags" -ForegroundColor Green
 }
@@ -491,7 +491,7 @@ function Store-VulnerableCredentials {
     
     # Windows Credential Manager
     cmdkey /add:$ServerName /user:Administrator /pass:$CommonPassword
-    cmdkey /add:fileserver /user:localadmin /pass:admin123
+    cmdkey /add:fileserver /user:localadmin /pass:Administrator123
     cmdkey /add:*.company.local /user:jsmith /pass:Welcome1
     
     # Create credential files
@@ -971,11 +971,11 @@ Write-Host "  Total Flags Placed: $($global:FlagList.Count)" -ForegroundColor Ye
 Write-Host "  Total Points Available: $(($global:FlagList | Measure-Object -Property Points -Sum).Sum)" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Users for Mimikatz testing:" -ForegroundColor Cyan
-Write-Host "  localadmin: admin123 (Admin)" -ForegroundColor Yellow
+Write-Host "  localadmin: Administrator123 (Admin)" -ForegroundColor Yellow
 Write-Host "  jsmith: Welcome1 (Auto-logon)" -ForegroundColor Yellow
 Write-Host "  mjones: Password1" -ForegroundColor Yellow
-Write-Host "  developer: dev123" -ForegroundColor Yellow
-Write-Host "  debuguser: Debug123! (has debug privs)" -ForegroundColor Yellow
+Write-Host "  developer: Developer123!" -ForegroundColor Yellow
+Write-Host "  debuguser: Debugger123! (has debug privs)" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Server connection:" -ForegroundColor Cyan
 Write-Host "  Configured to connect to: $ServerName" -ForegroundColor Yellow
