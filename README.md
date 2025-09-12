@@ -97,9 +97,16 @@ cmdkey /add:server01 /user:Administrator /pass:Password123!
 - Download the vulnworkstation.ps1 to the downloads folder.
 
 ```bash
+# replace /*user*/ with the username you created during the windows installation process 
 cd /
-cd .\Users\OC\Downloads\
+cd .\Users\*user*\Downloads\
+# my username is "overclock" which I demonstrate below
 ```
+```bash
+cd /
+cd .\Users\overclock\Downloads\
+```
+
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
