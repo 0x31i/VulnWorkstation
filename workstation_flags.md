@@ -130,7 +130,7 @@ smb: \> ls
 smb: \> get email.txt
 smb: \> !cat email.txt
 # Output: // FLAG{FEAROW08818758}
-# Also contains: admin@company.com / Password123!
+# Also contains: Administrator@overclock.io / Password123!
 smb: \> quit
 ```
 
