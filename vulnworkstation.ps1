@@ -294,7 +294,7 @@ function Create-VulnerableShares {
     
     # Email credentials with flag
     $emailFlag = New-CTFFlag -Location "Email Credentials" -Description "email.txt in Passwords folder" -Points 15 -Difficulty "Easy" -Technique "Credential harvesting"
-    "Email: jsmith@company.com / Welcome1`nBackup: admin@company.com / $CommonPassword`n// $emailFlag" | Out-File "C:\Users\Public\Documents\Passwords\email.txt"
+    "Email: jsmith@overclock.io / Welcome1`nBackup: admin@overclock.io / $CommonPassword`n// $emailFlag" | Out-File "C:\Users\Public\Documents\Passwords\email.txt"
     
     # Hidden file with flag
     $hiddenFlag = New-CTFFlag -Location "Hidden File" -Description "Hidden .flag file in WorkFiles" -Points 25 -Difficulty "Medium" -Technique "Hidden file discovery"
@@ -492,7 +492,7 @@ function Store-VulnerableCredentials {
     # Windows Credential Manager
     cmdkey /add:$ServerName /user:Administrator /pass:$CommonPassword
     cmdkey /add:fileserver /user:localadmin /pass:Administrator123
-    cmdkey /add:*.company.local /user:jsmith /pass:Welcome1
+    cmdkey /add:*.overclock.local /user:jsmith /pass:Welcome1
     
     # Create credential files
     $credPath = "C:\Users\Public\Documents\Credentials"
@@ -500,7 +500,7 @@ function Store-VulnerableCredentials {
     
     # VPN credentials with flag
     $vpnFlag = New-CTFFlag -Location "VPN Config" -Description "VPN configuration file" -Points 20 -Difficulty "Medium" -Technique "Configuration file analysis"
-    "VPN Server: vpn.company.com`nUsername: jsmith`nPassword: Welcome1`nSecret: $vpnFlag" | Out-File "$credPath\vpn.txt"
+    "VPN Server: vpn.overclock.io`nUsername: jsmith`nPassword: Welcome1`nSecret: $vpnFlag" | Out-File "$credPath\vpn.txt"
     
     # Database credentials
     "Server=$ServerName;Database=HR;User Id=sa;Password=sa2019;" | Out-File "$credPath\database.config"
@@ -688,7 +688,7 @@ function Enable-LegacyProtocols {
     
     # Enable WPAD
     Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name AutoDetect -Value 1
-    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name AutoConfigURL -Value "http://wpad.company.local/wpad.dat"
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -Name AutoConfigURL -Value "http://wpad.overclock.local/wpad.dat"
     
     # Enable WinRM with basic auth (with better error handling)
     Write-Host "  Configuring WinRM..." -ForegroundColor Gray
