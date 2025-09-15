@@ -3,7 +3,7 @@
 # This script intentionally creates security vulnerabilities and CTF flags for penetration testing practice
 
 param(
-    [string]$ServerName = "WIN-TIP7RVRBJ8E",
+    [string]$ServerName = "WIN2019-SRV",
     [string]$NetworkPrinter = "192.168.1.230",
     [string]$CommonPassword = "Password123!",
     [switch]$GenerateFlagReport
