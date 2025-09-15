@@ -1,10 +1,9 @@
-# Windows 10 Workstation Vulnerable Lab Configuration Script v5 with Pokemon CTF Flags
-# Mimikatz-Friendly Edition - Optimized for Credential Dumping
+# Windows 10 Workstation Vulnerable Lab Configuration Script v5
 # WARNING: FOR ISOLATED LAB ENVIRONMENT ONLY - NEVER USE IN PRODUCTION
 # This script intentionally creates security vulnerabilities and CTF flags for penetration testing practice
 
 param(
-    [string]$ServerName = "WIN2019-SRV",
+    [string]$ServerName = "WIN-TIP7RVRBJ8E",
     [string]$NetworkPrinter = "192.168.1.230",
     [string]$CommonPassword = "Password123!",
     [switch]$GenerateFlagReport
@@ -12,8 +11,6 @@ param(
 
 Write-Host "==========================================" -ForegroundColor Red
 Write-Host "VULNERABLE WORKSTATION CONFIGURATION v5" -ForegroundColor Red
-Write-Host "MIMIKATZ-FRIENDLY EDITION" -ForegroundColor Red
-Write-Host "WITH POKEMON CTF FLAG SYSTEM" -ForegroundColor Red
 Write-Host "FOR EDUCATIONAL PURPOSES ONLY" -ForegroundColor Red
 Write-Host "NEVER USE IN PRODUCTION ENVIRONMENTS" -ForegroundColor Red
 Write-Host "==========================================" -ForegroundColor Red
@@ -720,7 +717,7 @@ function Generate-FlagReport {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CTF Flag Report - Workstation v5 Mimikatz Edition - $(hostname)</title>
+    <title>CTF Flag Report - Workstation v5 - $(hostname)</title>
     <style>
         body { font-family: Arial; margin: 20px; background: #f0f0f0; }
         .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
@@ -743,12 +740,11 @@ function Generate-FlagReport {
 <body>
     <div class="container">
         <div class="pokemon-theme">
-            <h1 style="color: white; border: none;">🎮 Pokemon CTF Flag Report v5 - Windows 10 Workstation 🎮</h1>
-            <h2 style="color: white;">Mimikatz-Friendly Edition</h2>
+            <h1 style="color: white; border: none;">CTF Flag Report v5 - Windows 10 Workstation</h1>
         </div>
         
         <div class="mimikatz">
-            <h3>🔑 Mimikatz-Specific Features (Workstation):</h3>
+            <h3>Mimikatz-Specific Features (Workstation):</h3>
             <ul>
                 <li><strong>WDigest Enabled:</strong> Plaintext passwords in LSASS memory</li>
                 <li><strong>Multiple Users Logged In:</strong> jsmith, localadmin, Administrator</li>
@@ -966,9 +962,8 @@ Write-Host "  Unquoted Service Paths (3 services)" -ForegroundColor Yellow
 Write-Host "  AlwaysInstallElevated enabled" -ForegroundColor Yellow
 Write-Host "  Print Spooler vulnerable" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "POKEMON CTF FLAG STATISTICS:" -ForegroundColor Cyan
+Write-Host "FLAG STATISTICS:" -ForegroundColor Cyan
 Write-Host "  Total Flags Placed: $($global:FlagList.Count)" -ForegroundColor Yellow
-Write-Host "  Total Points Available: $(($global:FlagList | Measure-Object -Property Points -Sum).Sum)" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Users for Mimikatz testing:" -ForegroundColor Cyan
 Write-Host "  localadmin: Administrator123 (Admin)" -ForegroundColor Yellow
@@ -986,6 +981,5 @@ if ($GenerateFlagReport) {
 }
 Write-Host ""
 Write-Host "REMINDER: This workstation is now EXTREMELY VULNERABLE!" -ForegroundColor Red
-Write-Host "Optimized for Mimikatz credential extraction!" -ForegroundColor Red
 Write-Host ""
 Write-Host "Please restart the workstation to ensure all changes take effect." -ForegroundColor Cyan
