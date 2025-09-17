@@ -2,7 +2,7 @@
 An automation script for configuring a vulnerable Windows 10 Workstation for Pentesting Practice. Before the script can be run, initial setup must be performed on a fresh install of Windows 10.
 
 # Installation
-## Preperation
+## Preparation
 For learning and testing purposes, Microsoft offers evaluation copies of all their Operating Systems. Legally obtain and install a copy of Windows 10 professional with the following specifications:
   - Processor: 64bit
   - CPU: Minimum 2 cores allocated
