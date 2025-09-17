@@ -2,6 +2,13 @@
 An automation script for configuring a vulnerable Windows 10 Workstation for Pentesting Practice. Before the script can be run, initial setup must be performed on a fresh install of Windows 10.
 
 # Installation
+## Preperation
+For learning and testing purposes, Microsoft offers evaluation copies of all their Operating Systems. Legally obtain and install a copy of Windows 10 professional with the following specifications:
+  - Processor: 64bit
+  - CPU: Minimum 2 cores allocated
+  - RAM: Minimum 2 GB allocated (ballooning from 2 GB to 4 GB preferred)
+  - Storage: Minimum 50 GB hdd allocated
+
 ## On Fresh Install of Windows 10 Workstation
 
 CRITICAL SECURITY WARNING: These configurations are INTENTIONALLY INSECURE and should ONLY be implemented in an isolated lab environment. Never apply these settings to production systems or networks connected to the internet.
