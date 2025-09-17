@@ -97,8 +97,8 @@ cmdkey /add:server01 /user:Administrator /pass:Password123!
 
 ```bash
 # replace /*user*/ with the username you created during the windows installation process 
-cd /
-cd .\Users\*user*\Downloads\
+# cd /
+# cd .\Users\*user*\Downloads\
 # my username is "overclock" which I demonstrate below
 ```
 ```bash
