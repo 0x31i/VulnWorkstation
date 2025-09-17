@@ -331,7 +331,7 @@ rpcclient $> queryuser jsmith
         Description :   Standard User Account
 ```
 
-**🎯 FLAG 1 FOUND**: FLAG{M**********1} - In Full Name field
+** FLAG 1 FOUND**: FLAG{M**********1} - In Full Name field
 
 **Why This Works**: Windows stores metadata with user accounts. Administrators often use these fields for notes, not expecting them to be enumerated remotely.
 
@@ -371,7 +371,7 @@ FLAG{R***********1}    False
 localadmin              False
 ```
 
-**🎯 FLAG 2 FOUND**: FLAG{R**********1} - Username itself is the flag!
+** FLAG 2 FOUND**: FLAG{R**********1} - Username itself is the flag!
 
 **Why WMI?**: WMI (Windows Management Instrumentation) queries the system differently than net user, revealing accounts hidden from normal enumeration.
 
@@ -597,7 +597,7 @@ Domain            : NT AUTHORITY
 Special Flag Entry: FLAG{B**********0}
 ```
 
-**🎯 FLAG 3 FOUND**: FLAG{B**********0} - In LSASS memory
+** FLAG 3 FOUND**: FLAG{B**********0} - In LSASS memory
 
 **Why This Works**: Windows keeps credentials in LSASS memory for Single Sign-On (SSO). WDigest (when enabled) stores plaintext passwords!
 
@@ -651,7 +651,7 @@ HKEY_LOCAL_MACHINE\SOFTWARE\DebugPrivileges
     WorkstationFlag    REG_SZ    FLAG{V***********2}
 ```
 
-**🎯 FLAG 4 FOUND**: FLAG{V**********2} - Debug privilege flag
+** FLAG 4 FOUND**: FLAG{V**********2} - Debug privilege flag
 
 **Why Debug Privilege Matters**: SeDebugPrivilege allows:
 - Reading any process memory
@@ -690,7 +690,7 @@ C:\Windows\system32> type C:\Users\Administrator\Desktop\pth_workstation_flag.tx
 FLAG{B***********0}
 ```
 
-**🎯 FLAG 5 FOUND**: FLAG{B**********0} - PTH success flag
+** FLAG 5 FOUND**: FLAG{B**********0} - PTH success flag
 
 **Why Pass-the-Hash Works**: NTLM authentication only needs the hash, not the plaintext password. This is why protecting LSASS memory is critical!
 
@@ -729,7 +729,7 @@ Password: Guest123!
 Flag: FLAG{P***********0}
 ```
 
-**🎯 FLAG 6 FOUND**: FLAG{P**********0} - WiFi password file
+** FLAG 6 FOUND**: FLAG{P**********0} - WiFi password file
 
 **Real-World Context**: Users document WiFi passwords for:
 - Helping colleagues connect
@@ -764,7 +764,7 @@ Password: Password123!
 // FLAG{F************8}
 ```
 
-**🎯 FLAG 7 FOUND**: FLAG{F**********8} - Email credentials
+** FLAG 7 FOUND**: FLAG{F**********8} - Email credentials
 
 **Why Users Do This**: 
 - Multiple email accounts
@@ -794,7 +794,7 @@ Mode                 LastWriteTime         Length Name
 FLAG{S*************2}
 ```
 
-**🎯 FLAG 8 FOUND**: FLAG{S**********2} - Hidden file
+** FLAG 8 FOUND**: FLAG{S**********2} - Hidden file
 
 **Hidden File Techniques**:
 ```powershell
@@ -839,7 +839,7 @@ Login: jsmith@overclock.io
 Password: Welcome1
 ```
 
-**🎯 FLAG 9 FOUND**: FLAG{N**********6} - Browser saved password
+** FLAG 9 FOUND**: FLAG{N**********6} - Browser saved password
 
 **Manual Chrome Password Location**:
 ```powershell
@@ -926,7 +926,7 @@ SERVICE_NAME: FakeAntivirus
 FLAG{N************6}
 ```
 
-**🎯 FLAG 10 FOUND**: FLAG{N**********6} - Unquoted service path 1
+** FLAG 10 FOUND**: FLAG{N**********6} - Unquoted service path 1
 
 ### FLAG 11: BackupManager Unquoted Path
 
@@ -951,7 +951,7 @@ SERVICE_NAME: BackupManager
 FLAG{C***********9}
 ```
 
-**🎯 FLAG 11 FOUND**: FLAG{C**********9} - Unquoted service path 2
+** FLAG 11 FOUND**: FLAG{C**********9} - Unquoted service path 2
 
 ### FLAG 12: RemoteSupportAgent Unquoted Path
 
@@ -974,7 +974,7 @@ SERVICE_NAME: RemoteSupportAgent
 FLAG{N**********6}
 ```
 
-**🎯 FLAG 12 FOUND**: FLAG{N**********6} - Unquoted service path 3
+** FLAG 12 FOUND**: FLAG{N**********6} - Unquoted service path 3
 
 ### FLAG 13: AlwaysInstallElevated
 
@@ -1019,7 +1019,7 @@ Execute on target:
 FLAG{W************5}
 ```
 
-**🎯 FLAG 13 FOUND**: FLAG{W**********5} - AlwaysInstallElevated
+** FLAG 13 FOUND**: FLAG{W**********5} - AlwaysInstallElevated
 
 **Why This Works**: When AlwaysInstallElevated is set, ANY user can install MSI packages with SYSTEM privileges!
 
@@ -1058,7 +1058,7 @@ Mode                 LastWriteTime         Length Name
 FLAG{G*************5}
 ```
 
-**🎯 FLAG 14 FOUND**: FLAG{G**********5} - Print Spooler vulnerability
+** FLAG 14 FOUND**: FLAG{G**********5} - Print Spooler vulnerability
 
 **Real-World Impact**: This represents PrintNightmare (CVE-2021-34527), a critical vulnerability that affected all Windows versions!
 
@@ -1096,7 +1096,7 @@ REM Flag: FLAG{V************1}
 powershell.exe -WindowStyle Hidden -Command "Write-Host 'Vulnerable startup script'"
 ```
 
-**🎯 FLAG 15 FOUND**: FLAG{V**********1} - Startup folder
+** FLAG 15 FOUND**: FLAG{V**********1} - Startup folder
 
 **Startup Folder Locations**:
 ```powershell
@@ -1126,7 +1126,7 @@ HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run
 FLAG{P**************5}
 ```
 
-**🎯 FLAG 16 FOUND**: FLAG{P**********5} - Registry Run key
+** FLAG 16 FOUND**: FLAG{P**********5} - Registry Run key
 
 **Common Registry Persistence Locations**:
 ```powershell
@@ -1172,7 +1172,7 @@ WorkingDirectory :
 FLAG{V************0}
 ```
 
-**🎯 FLAG 17 FOUND**: FLAG{V**********0} - Scheduled task
+** FLAG 17 FOUND**: FLAG{V**********0} - Scheduled task
 
 **Why Scheduled Tasks for Persistence**:
 - Survive reboots
@@ -1219,7 +1219,7 @@ Shared Secret: S3cur3VPN2025
 Flag: FLAG{D***********9}
 ```
 
-**🎯 FLAG 18 FOUND**: FLAG{D**********9} - VPN configuration
+** FLAG 18 FOUND**: FLAG{D**********9} - VPN configuration
 
 **Why VPN Configs Are Sensitive**:
 - Contains authentication credentials
@@ -1257,7 +1257,7 @@ C:\Users\Public\Documents\Credentials\admin.xml
 <!-- Flag: FLAG{P***********9} -->
 ```
 
-**🎯 FLAG 19 FOUND**: FLAG{P**********9} - PowerShell credential
+** FLAG 19 FOUND**: FLAG{P**********9} - PowerShell credential
 
 **Decrypting PowerShell Credentials**:
 ```powershell
@@ -1303,7 +1303,7 @@ Macro Code: Sub AutoOpen()
 End Sub
 ```
 
-**🎯 FLAG 20 FOUND**: FLAG{G**********8} - Macro document
+** FLAG 20 FOUND**: FLAG{G**********8} - Macro document
 
 **Real-World Macro Threats**:
 - AutoOpen/AutoExec runs on document open
@@ -1342,7 +1342,7 @@ Mode                 LastWriteTime         Length Name
 </html>
 ```
 
-**🎯 FLAG 21 FOUND**: FLAG{P**********5} - HTA application
+** FLAG 21 FOUND**: FLAG{P**********5} - HTA application
 
 **Why HTA Files Are Dangerous**:
 - Execute with full user privileges
@@ -1381,7 +1381,7 @@ REM Any DLL placed here will be loaded before system DLLs
 REM Flag: FLAG{G************9}
 ```
 
-**🎯 FLAG 22 FOUND**: FLAG{G**********9} - DLL hijack path
+** FLAG 22 FOUND**: FLAG{G**********9} - DLL hijack path
 
 **DLL Hijacking Explained**:
 1. Windows searches for DLLs in PATH order
@@ -1424,7 +1424,7 @@ Description: Connect to server - Flag: FLAG{P***********0}
 ---
 ```
 
-**🎯 FLAG 23 FOUND**: FLAG{P**********0} - Desktop shortcut
+** FLAG 23 FOUND**: FLAG{P**********0} - Desktop shortcut
 
 **Shortcut Intelligence**:
 - Reveals network shares
@@ -1448,7 +1448,7 @@ FLAG{K**********8}
 FLAG{K**********8}
 ```
 
-**🎯 FLAG 24 FOUND**: FLAG{K**********8} - Clipboard content
+** FLAG 24 FOUND**: FLAG{K**********8} - Clipboard content
 
 **Why Clipboard Matters**:
 - Users copy passwords
@@ -1489,7 +1489,7 @@ Mode                 LastWriteTime         Length Name
 FLAG{M***********9}
 ```
 
-**🎯 FLAG 25 FOUND**: FLAG{M**********9} - Recycle Bin
+** FLAG 25 FOUND**: FLAG{M**********9} - Recycle Bin
 
 **Recycle Bin Intelligence**:
 - Deleted files aren't gone
@@ -1525,7 +1525,7 @@ Password for admin: Password123!
 Meeting at 3pm tomorrow
 ```
 
-**🎯 FLAG 26 FOUND**: FLAG{W**********3} - Sticky Notes
+** FLAG 26 FOUND**: FLAG{W**********3} - Sticky Notes
 
 **Why Sticky Notes Are Gold**:
 - Users write passwords
@@ -1575,7 +1575,7 @@ mimikatz # dpapi::blob /in:C:\Users\Public\Documents\dpapi_flag.bin
 Decrypted data: FLAG{T************3}
 ```
 
-**🎯 FLAG 27 FOUND**: FLAG{T**********3} - DPAPI blob
+** FLAG 27 FOUND**: FLAG{T**********3} - DPAPI blob
 
 **Alternative DPAPI Decryption**:
 ```powershell
