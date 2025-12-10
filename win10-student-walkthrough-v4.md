@@ -331,7 +331,7 @@ rpcclient $> queryuser jsmith
         Description :   Standard User Account
 ```
 
-* 1 FOUND**: FLAG{M**********1} - In Full Name field
+**FLAG 1 FOUND**: FLAG{M**********1} - In Full Name field
 
 **Why This Works**: Windows stores metadata with user accounts. Administrators often use these fields for notes, not expecting them to be enumerated remotely.
 
@@ -371,7 +371,7 @@ FLAG{R***********1}    False
 localadmin              False
 ```
 
-* 2 FOUND**: FLAG{R**********1} - Username itself is the flag!
+**FLAG 2 FOUND**: FLAG{R**********1} - Username itself is the flag!
 
 **Why WMI?**: WMI (Windows Management Instrumentation) queries the system differently than net user, revealing accounts hidden from normal enumeration.
 
@@ -597,7 +597,7 @@ Domain            : NT AUTHORITY
 Special Flag Entry: FLAG{B**********0}
 ```
 
-* 3 FOUND**: FLAG{B**********0} - In LSASS memory
+**FLAG 3 FOUND**: FLAG{B**********0} - In LSASS memory
 
 **Why This Works**: Windows keeps credentials in LSASS memory for Single Sign-On (SSO). WDigest (when enabled) stores plaintext passwords!
 
